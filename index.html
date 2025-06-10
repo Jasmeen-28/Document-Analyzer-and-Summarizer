@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PDF Summarizer</title>
+<style>
+  /* Reset & base */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+      Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    background-color: #ffffff;
+    color: #6b7280;
+    line-height: 1.6;
+    font-size: 18px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  a:hover,
+  a:focus {
+    color: #111827;
+  }
+
+  /* Container max width */
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-left: 24px;
+    padding-right: 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  header {
+    position: sticky;
+    top: 0;
+    background: #ffffffcc;
+    backdrop-filter: saturate(180%) blur(10px);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
+    z-index: 1000;
+  }
+  nav {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #111827;
+    letter-spacing: -0.02em;
+    user-select: none;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #374151;
+  }
+  .nav-links a {
+    position: relative;
+    padding-bottom: 0.3rem;
+    transition: color 0.25s ease;
+  }
+  .nav-links a::after {
+    content: "";
+    position: absolute;
+    height: 2px;
+    width: 0;
+    bottom: 0;
+    left: 0;
+    background: #111827;
+    transition: width 0.25s ease;
+    border-radius: 99px;
+  }
+  .nav-links a:hover::after,
+  .nav-links a:focus::after {
+    width: 100%;
+  }
+
+  /* Hero Section */
+  .hero {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+    text-align: center;
+    color: #111827;
+  }
+  .hero h1 {
+    font-weight: 800;
+    font-size: 4.5rem;
+    margin: 0 auto 1.25rem auto;
+    line-height: 1.05;
+    max-width: 900px;
+    letter-spacing: -0.03em;
+  }
+  .hero p {
+    font-weight: 400;
+    font-size: 1.375rem;
+    max-width: 620px;
+    margin: 0 auto 3rem auto;
+    color: #4b5563;
+  }
+  .btn-primary {
+    background-color: #111827;
+    color: #fff;
+    border: none;
+    padding: 1.25rem 3rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 20px rgb(17 24 39 / 0.25);
+    user-select: none;
+  }
+  .btn-primary:hover,
+  .btn-primary:focus {
+    background-color: #374151;
+    box-shadow:
+      0 10px 30px rgb(17 24 39 / 0.4),
+      inset 0 -3px 8px rgb(17 24 39 / 0.25);
+    outline: none;
+  }
+  .btn-primary:focus-visible {
+    outline: 3px solid #2563EB;
+    outline-offset: 3px;
+  }
+
+  /* Upload Card */
+  .upload-card {
+    background: #fff;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.1);
+    border-radius: 0.75rem;
+    padding: 3rem 3.5rem;
+    max-width: 600px;
+    margin: 0 auto 4.5rem auto;
+    text-align: center;
+  }
+  .upload-card:hover {
+    box-shadow: 0 12px 40px rgb(0 0 0 / 0.15);
+  }
+  .upload-card label {
+    display: block;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: #374151;
+    margin-bottom: 1.25rem;
+    user-select: none;
+  }
+  .file-input {
+    display: inline-block;
+    width: 100%;
+    padding: 0.95rem 1.25rem;
+    font-size: 1.125rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0.6rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+    background-color: #fafafa;
+    user-select: none;
+    box-shadow:
+      inset 0 1px 3px rgb(255 255 255 / 0.75);
+  }
+  .file-input:hover,
+  .file-input:focus {
+    border-color: #111827;
+    outline: none;
+    box-shadow:
+      0 0 10px rgb(17 24 39 / 0.25),
+      inset 0 1px 5px rgba(255 255 255 / 0.95);
+  }
+  #uploadButton {
+    margin-top: 2.25rem;
+    width: 100%;
+  }
+
+  /* Dropdown Selector */
+  .summary-selector-container {
+    max-width: 600px;
+    margin: 0 auto 1.5rem auto;
+    text-align: center;
+  }
+  label[for="summarySelector"] {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #374151;
+    margin-right: 0.75rem;
+    user-select: none;
+  }
+  select#summarySelector {
+    font-size: 1.1rem;
+    padding: 0.4rem 0.8rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    font-weight: 500;
+    color: #374151;
+    background-color: #fafafa;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    user-select: none;
+  }
+  select#summarySelector:hover,
+  select#summarySelector:focus {
+    border-color: #111827;
+    outline: none;
+    box-shadow:
+      0 0 8px rgb(17 24 39 / 0.25);
+  }
+
+  /* Horizontal Summary Cards Container */
+  .summary-section {
+    max-width: 900px;
+    margin: 0 auto 5rem auto;
+    display: flex;
+    gap: 2.5rem;
+    justify-content: center;
+    flex-wrap: nowrap;
+  }
+  .summary-card {
+    background: #fff;
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 28px rgb(0 0 0 / 0.09);
+    padding: 2.5rem 3rem;
+    color: #374151;
+    flex: 1 1 45%;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.3s ease;
+    user-select: text;
+    min-height: 250px;
+  }
+  .summary-card:hover {
+    box-shadow: 0 14px 50px rgb(0 0 0 / 0.17);
+  }
+  .summary-card h2 {
+    font-weight: 800;
+    font-size: 1.875rem;
+    margin-bottom: 1.5rem;
+    color: #111827;
+  }
+  .summary-text {
+    flex: 1;
+    white-space: pre-wrap;
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: #4b5563;
+    font-weight: 500;
+    overflow-y: auto;
+  }
+
+  /* Hide summaries by default */
+  .hidden {
+    display: none !important;
+  }
+
+  /* Loading Spinner */
+  .spinner {
+    margin: 1.75rem auto 0 auto;
+    border: 5.5px solid #e5e7eb;
+    border-top: 5.5px solid #111827;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    animation: spin 1.2s linear infinite;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 3rem 1rem;
+    font-size: 0.9rem;
+    color: #9ca3af;
+    font-weight: 600;
+    user-select: none;
+  }
+
+  /* Accessibility helper */
+  .sr-only {
+    position: absolute !important;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 900px) {
+    .summary-section {
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+    .summary-card {
+      flex: 1 1 48%;
+      min-height: auto;
+    }
+  }
+  @media (max-width: 650px) {
+    .summary-section {
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .summary-card {
+      flex: none;
+      min-height: auto;
+    }
+  }
+  @media (max-width: 520px) {
+    .hero h1 {
+      font-size: 3rem;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      max-width: 90vw;
+    }
+    .upload-card {
+      padding: 2.5rem 2rem;
+    }
+    .summary-card {
+      padding: 2rem 2.2rem;
+    }
+    #summarySection {
+      display: flex;
+    }
+    
+  }
+</style>
+</head>
+<body>
+  <header>
+    <nav aria-label="Primary navigation" role="navigation" class="container">
+      <div class="logo" tabindex="0" aria-label="PDF Summarizer logo">PDF Summarizer</div>
+      <div class="nav-links" role="menubar" aria-orientation="horizontal">
+        <a href="https://github.com" target="_blank" rel="noopener noreferrer" role="menuitem" tabindex="0" title="GitHub repository">GitHub</a>
+        <a href="https://huggingface.co" target="_blank" rel="noopener noreferrer" role="menuitem" tabindex="0" title="Hugging Face Models">Hugging Face</a>
+      </div>
+    </nav>
+  </header>
+
+  <main role="main" class="container">
+    <section class="hero" aria-label="Hero section introduction">
+      <h1>Effortless PDF Summarization</h1>
+      <p>Upload your PDF document and get instant extractive and abstractive summaries powered by state-of-the-art AI models.</p>
+      <button class="btn-primary" id="scrollToUpload" aria-label="Scroll to PDF upload section">Get Started</button>
+    </section>
+
+    <section class="upload-card" id="uploadSection" aria-label="PDF upload section">
+      <label for="fileInput">Select a <strong>document</strong> file (.pdf, .doc, .docx, .txt) to summarize:</label>
+      <input type="file" id="fileInput" class="file-input" accept=".pdf,.doc,.docx,.txt" aria-required="true" aria-describedby="fileDesc" />
+      <div id="fileDesc" class="sr-only">Choose your document file (.pdf, .doc, .docx, .txt) for summarization. Maximum size 10 MB.</div>
+      <button class="btn-primary" id="uploadButton" aria-live="polite" aria-busy="false" disabled>Upload &amp; Summarize</button>
+      <div id="loadingSpinner" class="spinner" aria-hidden="true" style="display:none;"></div>
+      <div aria-live="assertive" role="alert" id="errorMsg" style="color:#b91c1c; font-weight:700; margin-top:1.25rem; display:none;"></div>
+    </section>
+
+    <div class="summary-selector-container" id="summarySelectorContainer" style="display:none;">
+      <label for="summarySelector">Select summary to view:</label>
+      <select id="summarySelector" aria-label="Select summary type to display">
+        <option value="extractive" selected>Extractive Summary</option>
+        <option value="abstractive">Abstractive Summary</option>
+        <option value="both">Both</option>
+      </select>
+    </div>
+
+    <section class="summary-section" id="summarySection" aria-label="Summary results" style="display:none;">
+      <article class="summary-card" id="extractiveCard" aria-live="polite" aria-atomic="true">
+        <h2>Extractive Summary</h2>
+        <p class="summary-text" id="extractiveSummary">Loading summary...</p>
+      </article>
+      <article class="summary-card" id="abstractiveCard" aria-live="polite" aria-atomic="true">
+        <h2>Abstractive Summary</h2>
+        <p class="summary-text" id="abstractiveSummary">Loading summary...</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    &copy; 2025 PDF Summarizer - Powered by FastAPI and Hugging Face
+  </footer>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const uploadButton = document.getElementById('uploadButton');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const errorMsg = document.getElementById('errorMsg');
+    const summarySection = document.getElementById('summarySection');
+    const extractiveSummary = document.getElementById('extractiveSummary');
+    const abstractiveSummary = document.getElementById('abstractiveSummary');
+    const scrollToUpload = document.getElementById('scrollToUpload');
+    const uploadSection = document.getElementById('uploadSection');
+    const summarySelectorContainer = document.getElementById('summarySelectorContainer');
+    const summarySelector = document.getElementById('summarySelector');
+    const extractiveCard = document.getElementById('extractiveCard');
+    const abstractiveCard = document.getElementById('abstractiveCard');
+
+    // Enable upload button only if file is selected
+    fileInput.addEventListener('change', () => {
+      errorMsg.style.display = 'none';
+      summarySection.style.display = 'none';
+      summarySelectorContainer.style.display = 'none';
+      if (fileInput.files.length > 0) {
+        uploadButton.disabled = false;
+      } else {
+        uploadButton.disabled = true;
+      }
+    });
+
+    scrollToUpload.addEventListener('click', () => {
+      uploadSection.scrollIntoView({ behavior: 'smooth' });
+      fileInput.focus();
+    });
+
+    uploadButton.addEventListener('click', async () => {
+      if (!fileInput.files.length) return;
+
+      const file = fileInput.files[0];
+      if (file.size > 10 * 1024 * 1024) {
+        errorMsg.textContent = "File size exceeds 10 MB limit.";
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      uploadButton.disabled = true;
+      loadingSpinner.style.display = 'block';
+      errorMsg.style.display = 'none';
+      summarySection.style.display = 'none';
+      summarySelectorContainer.style.display = 'none';
+      uploadButton.setAttribute('aria-busy', 'true');
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/analyze/', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Failed to summarize file.');
+        }
+
+        const data = await response.json();
+        extractiveSummary.textContent = data.extractive_summary;
+        abstractiveSummary.textContent = data.abstractive_summary;
+        summarySection.style.display = 'flex';
+        summarySelectorContainer.style.display = 'block';
+        summarySelector.value = "extractive";
+        showSummary('extractive');
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = 'block';
+      } finally {
+        uploadButton.disabled = false;
+        loadingSpinner.style.display = 'none';
+        uploadButton.setAttribute('aria-busy', 'false');
+      }
+    });
+
+    // Function to show/hide summaries based on selection
+    function showSummary(selected) {
+      if (selected === 'extractive') {
+        extractiveCard.classList.remove('hidden');
+        abstractiveCard.classList.add('hidden');
+        summarySection.style.justifyContent = 'center';
+      } else if (selected === 'abstractive') {
+        extractiveCard.classList.add('hidden');
+        abstractiveCard.classList.remove('hidden');
+        summarySection.style.justifyContent = 'center';
+      } else { // both
+        extractiveCard.classList.remove('hidden');
+        abstractiveCard.classList.remove('hidden');
+
+        summarySection.style.display = 'flex';
+        summarySection.style.flexDirection = 'column'; // Stack vertically
+        summarySection.style.justifyContent = 'center'; // Center vertically
+        summarySection.style.alignItems = 'center'; 
+
+      }
+    }
+
+    summarySelector.addEventListener('change', () => {
+      showSummary(summarySelector.value);
+    });
+  </script>
+</body>
+</html>
+

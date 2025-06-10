@@ -1,0 +1,7 @@
+streamlit
+transformers
+torch
+PyMuPDF
+bert-extractive-summarizer
+scikit-learn
+numpy
